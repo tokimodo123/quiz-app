@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ランダム10問テスト</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-primary: #667eea;
+      --c-secondary: #764ba2;
+      --c-bg: #f0f2f5;
+      --c-card: rgba(255,255,255,0.75);
+      --c-text: #333;
+      --c-success: #2f855a;
+      --c-error:   #c53030;
+      --radius: 0.8rem;
+      --transition: 0.2s ease;
+    }
+    * { box-sizing: border-box; margin:0; padding:0 }
+    body {
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: 'Noto Sans JP', sans-serif;
+      line-height: 1.6;
+      padding: 1rem;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem;
+      background: linear-gradient(135deg, var(--c-primary), var(--c-secondary));
+      background-size: 200% 200%;
+      animation: grad 30s linear infinite;
+      border-radius: 0 0 var(--radius) var(--radius);
+      color: #fff;
+    }
+    @keyframes grad {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+    header h1 {
+      font-size: clamp(1.5rem, 6vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: .05em;
+    }
+    #wrap {
+      max-width: 820px;
+      margin: 2rem auto;
+      opacity: 0;
+      animation: fadeIn 0.6s forwards 0.3s;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1 }
+    }
+    #progress {
+      height: 6px;
+      background: #ddd;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: .8rem;
+    }
+    #bar {
+      width: 0;
+      height: 100%;
+      background: var(--c-primary);
+      transition: width .3s ease;
+    }
+    #counter {
+      font-size: .85rem;
+      text-align: right;
+      margin-bottom: 1rem;
+      color: #666;
+    }
+    .card {
+      background: var(--c-card);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+      transform: translateY(20px);
+      opacity: 0;
+      animation: slideUp 0.5s forwards;
+    }
+    @keyframes slideUp {
+      to { transform: translateY(0); opacity: 1 }
+    }
+    .card h2 {
+      padding: 1.4rem 1.6rem;
+      font-size: clamp(1rem, 4vw, 1.2rem);
+      border-bottom: 1px solid #eee;
+    }
+    .choices {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+    @media(min-width: 600px) {
+      .choices { grid-template-columns: 1fr 1fr; }
+    }
+    .choices button {
+      position: relative;
+      all: unset;
+      margin: 0;
+      padding: 1rem 1.4rem;
+      background: #fff;
+      cursor: pointer;
+      border-top: 1px solid #eee;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .choices button:first-child { border-top: none; }
+    .choices button:hover {
+      transform: translateX(4px);
+      box-shadow: 2px 4px 12px rgba(0,0,0,0.05);
+      background: #fafafb;
+    }
+    .choices button:active::after {
+      content: '';
+      position: absolute; top:50%; left:50%;
+      width: 60px; height: 60px;
+      background: rgba(0,0,0,0.04);
+      border-radius: 50%;
+      transform: translate(-50%,-50%) scale(0);
+      animation: ripple .6s ease-out forwards;
+    }
+    @keyframes ripple {
+      to { transform: translate(-50%,-50%) scale(4); opacity:0 }
+    }
+    .choices button.correct {
+      background: #e6f4ea;
+      color: var(--c-success);
+      animation: pop .3s forwards;
+    }
+    @keyframes pop {
+      0%,100%{transform:scale(1)}
+      50%{transform:scale(1.02)}
+    }
+    .choices button.incorrect {
+      background: #fdecea;
+      color: var(--c-error);
+      animation: shake .3s forwards;
+    }
+    @keyframes shake {
+      0%,100%{transform:translateX(0)}
+      50%{transform:translateX(3px)}
+    }
+    .feedback-icon {
+      position: absolute;
+      right: 1rem; top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.1rem;
+      opacity: 0;
+      animation: fly 0.5s forwards;
+    }
+    @keyframes fly {
+      0%{opacity:1; transform:translate(0,-50%) scale(1)}
+      60%{transform:translate(-6px,-70%) scale(1.05)}
+      100%{opacity:0; transform:translate(-10px,-100%) scale(0.9)}
+    }
+    #expl {
+      display: none;
+      padding: 1rem 1.6rem;
+      background: #fff;
+      font-size: .9rem;
+      border-top: 1px solid #eee;
+      line-height: 1.5;
+    }
+    #next {
+      display: none;
+      all: unset;
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 1rem 0;
+      background: var(--c-primary);
+      color: #fff;
+      border-radius: 0 0 var(--radius) var(--radius);
+      cursor: pointer;
+      font-weight: 500;
+      transition: background var(--transition);
+    }
+    #next:hover { background: var(--c-secondary); }
+    #result, #postQuiz {
+      display: none;
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    #result {
+      padding: 2rem;
+      background: var(--c-card);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      animation: fadeIn 0.5s forwards;
+    }
+    #result h2 {
+      font-size: 1.8rem;
+      color: var(--c-primary);
+      margin-bottom: .8rem;
+    }
+    #postQuiz button {
+      all: unset;
+      display: inline-block;
+      margin: 0 .5rem;
+      padding: .8rem 1.2rem;
+      background: var(--c-secondary);
+      color: #fff;
+      border-radius: .6rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background var(--transition);
+    }
+    #postQuiz button:hover { background: var(--c-primary); }
+    footer {
+      text-align: center;
+      font-size: .8rem;
+      color: #888;
+      margin: 2rem auto;
+      opacity: 0;
+      animation: fadeIn 0.8s forwards 0.6s;
+    }
+  </style>
+</head>
+<body>
+  <header><h1>ランダム10問テスト</h1></header>
+  <div id="wrap">
+    <div id="progress"><div id="bar"></div></div>
+    <div id="counter"></div>
+    <div class="card" id="card">
+      <h2 id="qtxt"></h2>
+      <div class="choices" id="choices"></div>
+      <div id="expl"></div>
+      <button id="next">次の問題▶</button>
+    </div>
+    <div id="result"></div>
+    <div id="postQuiz">
+      <button id="reviewBtn">この10問を復習</button>
+      <button id="newBtn">新しい10問</button>
+    </div>
+  </div>
+  <footer>© 2025 Self-Test</footer>
+  <script>
+    // — ここに P1,P2 を貼り込んでください —
+    const P1 = [   {q:"青年期は第二次性徴のころから始まり、おおむね何歳ごろまで続くとされていますか。",c:["16〜18歳ごろ","20〜22歳ごろ","24〜25歳ごろ","30〜35歳ごろ"],a:2,e:"大学卒業期にあたる24〜25歳ごろまでとする説が主流です。"},
+  {q:"ルソーは青年期を「________」と呼びました。",c:["第一の誕生","第二の誕生","心理的離乳","青年期モラトリアム"],a:1,e:"精神的に再び生まれ変わる時期を示します。"},
+  {q:"中世ヨーロッパで「子ども＝小さな大人」とみなされていたことを指摘した思想家は？",c:["レヴィン","ルソー","エリクソン","和辻哲郎"],a:1,e:"ルソー『エミール』序文での主張。"},
+  {q:"マージナルマン（境界人）とは、子ども集団にも大人集団にも帰属意識を持てない青年を指す。",c:["◯ 正しい","✕ 誤り"],a:0,e:"独心理学者レヴィンが提唱した概念。"},
+  {q:"エリクソンが提唱した青年期は心理・社会的________の時期である。",c:["エートス","ギャップ","モラトリアム","ソーシャルキャピタル"],a:2,e:"義務や責任が猶予されるモラトリアム期間。"},
+  {q:"欲求の葛藤で「成績を上げたいが遊びもしたい」はどの類型？",c:["接近―接近型","接近―回避型","回避―回避型"],a:0,e:"望ましい目標同士で迷う接近―接近型。"},
+  {q:"パラサイトシングルとはどのような生活形態か。",c:["単身都会住み","親と同居し依存する未婚者","就労経験ゼロのニート","海外単身赴任"],a:1,e:"就職後も親に経済面を依存する未婚者。"},
+  {q:"アドラー心理学で、劣等性をバネに自己を変えようとする概念は？",c:["超自我","劣等感","投影","逃避"],a:1,e:"劣等感を補償の原動力に変える考え方。"},
+  {q:"フロイトの心の構造で道徳心・良心に該当する領域は？",c:["自我","イド","超自我","前意識"],a:2,e:"超自我 (super-ego) が社会規範を担います。"},
+  {q:"マズロー階層説で『自己実現の欲求』はどの区分？",c:["基本的欲求","成長欲求"],a:1,e:"欠乏が満たされた後に現れる成長欲求です。"},
+  {q:"親から心理的に独り立ちする過程を指す語は？",c:["心理的離乳","第二の誕生","第二反抗期","劣等感"],a:0,e:"ホリングワースが示した概念です。"},
+  {q:"「勉強したくないが補習にも呼ばれたくない」はどの葛藤型？",c:["接近―接近型","接近―回避型","回避―回避型"],a:2,e:"望ましくない選択肢同士で迷う回避―回避型。"},
+  {q:"『安全の欲求』と同じ階層にないものは？",c:["所属と愛情の欲求","生理的欲求","承認の欲求"],a:2,e:"承認欲求は安全より上位。"},
+  {q:"和辻哲郎が人間を『＿＿的存在』と呼んだときの語句は何か。",c:["間柄","境界","孤立","倫理"],a:0,e:"人間は他者との『間柄』で存在する。"},
+  {q:"古代日本で水を使って穢れを清める行為を何という？",c:["禊","祓い","祭祀","斎戒"],a:0,e:"禊(みそぎ)＝水による清め儀礼。"},
+  {q:"穢れを取り除く行為全般を示す古代日本の語はどれか。",c:["祓い","禊","祭祀","斎戒"],a:0,e:"祓(はらえ)は穢れ全般の除去。"},
+  {q:"自然界のあらゆるものに精霊が宿るとする信仰を指す語はどれか。",c:["アニミズム","テオーリア","トーテミズム","無神論"],a:0,e:"animus(魂) に由来する精霊信仰。"},
+  {q:"八百万の神思想を支える宗教観は？",c:["包摂的多神教","厳格一神教","汎神論","不可知論"],a:0,e:"森羅万象に神が宿るという多神教観。"},
+  {q:"防衛機制で自分の認め難い感情や衝動を他者に帰属させる作用は？",c:["投射(投影)","合理化","抑圧","置き換え"],a:0,e:"受け入れ難い衝動を他者へ投影する作用。"},
+  {q:"防衛機制は「無意識に自我を守ろうとする働き」である。",c:["◯ 正しい","✕ 誤り"],a:0,e:"不安や葛藤から自我を保護するメカニズム。"},
+  {q:"快楽原則に従う欲望の原動力を示すフロイト用語は？",c:["イド","自我","超自我","無意識"],a:0,e:"イド(id)=本能的欲求の源泉。"},
+  {q:"NEETはどのような若者か？",c:["教育・就労訓練を受けず就業もしていない","親と同居し自由を享受する未婚者","非正規雇用で働くフリーター","海外留学中"],a:0,e:"Not in Education, Employment or Training の頭文字。"},
+  {q:"伊藤仁斎が重視した徳目は？",c:["誠","忠信","仁愛","真心"],a:0,e:"『誠』=真実無偽を重んじる。"},
+  {q:"『惟神の道』はどこの宗教観？",c:["日本神道","ギリシア神話","イスラム教","ゾロアスター教"],a:0,e:"日本固有のカミの道を意味。"},
+  {q:"自己実現の一段下に位置する欲求は？",c:["承認欲求","所属と愛情の欲求","安全欲求","生理的欲求"],a:0,e:"承認→自己実現の順序。"},
+  {q:"アイデンティティの拡散とは？",c:["自分が何者か分からない状態","自己確立","社会参加が高い","達成感が強い"],a:0,e:"同一性が曖昧な状態です。"},
+  {q:"アパシーとは無気力・無感動を指す。",c:["◯ 正しい","✕ 誤り"],a:0,e:"興味や意欲が持てない状態。"},
+  {q:"思春期に現れる二度目の反抗期を何という？",c:["第二反抗期","第一次反抗期","第三反抗期","反抗停止期"],a:0,e:"第一次は幼児期、第二は思春期。"},
+  {q:"心理的離乳が進むと親子関係はどうなる？",c:["対等な関係へ","依存が強まる","絶交する","興味がなくなる"],a:0,e:"親子の対等性を模索する方向。"},
+  {q:"青年を『境界人』と呼んだのは？",c:["レヴィン","ルソー","和辻哲郎","小此木啓吾"],a:0,e:"レヴィンが提唱。"},
+  {q:"モンスーン型風土の文化的特徴は？",c:["受容・忍耐","闘争・厳格","合理・自由","享楽主義"],a:0,e:"自然に従順な受容文化。"},
+  {q:"沙漠型風土で発達した精神は？",c:["闘争心と一神教","受容性","牧歌的自由","快楽主義"],a:0,e:"過酷環境→闘争と厳格一神教。"},
+  {q:"牧場型風土で発達した価値観は？",c:["合理的自由","受容忍耐","闘争排他"],a:0,e:"ギリシアの合理・自由精神。"},
+  {q:"アニミズムを背景に広まった多神教的信仰を示す語は？",c:["八百万の神","一神教","汎神論","不可知論"],a:0,e:"森羅万象に神が宿る。"},
+  {q:"ヤマアラシのジレンマとは？",c:["対人距離の葛藤","羊の効果","カニの交叉","ロバのジレンマ"],a:0,e:"近づきたいが距離が近すぎて傷つく葛藤。"},
+  {q:"マズロー階層で生理的欲求の次は？",c:["安全欲求","承認欲求","所属欲求","自己実現欲求"],a:0,e:"欠乏欲求の第二層=安全欲求。"},
+  {q:"小此木啓吾が現代青年を評した語は？",c:["モラトリアム人間","ニューヒューマン","サイレント・マジョリティ","ノマド"],a:0,e:"社会的自立を先送りした青年像。"},
+  {q:"防衛機制『合理化』の典型例は？",c:["負け惜しみで正当化","他者を真似る","子ども返り","目標を昇華"],a:0,e:"“酸っぱい葡萄” など。"},
+  {q:"昇華とは？",c:["欲求を社会的価値ある行為に転化","感情を抑圧","他者へ投影","目標放棄"],a:0,e:"芸術や学問に転化する機制。"},
+  {q:"青年期の友人関係キーワードは？",c:["対等性","服従","権力","依存"],a:0,e:"水平的な相互尊重。"},
+  {q:"自己肯定感を高める直接的要因は？",c:["成功体験","徹夜","長時間労働","炭水化物摂取"],a:0,e:"成功→有能感→自尊感情。"},
+  {q:"社会的アイデンティティは何によって形成？",c:["集団への帰属","生物学的性","偶発事故","栄養状態"],a:0,e:"所属集団との比較で自己を定義。"},
+  {q:"女子に見られない第二次性徴は？",c:["声変わり","初経","乳房発達","皮下脂肪増加"],a:0,e:"声変わりは男子特有。"},
+  {q:"青年期に可能になる命題的思考の例は？",c:["『もし〜ならば』を扱う","具体物限定","感覚理解のみ","単純反射"],a:0,e:"抽象・仮定を扱う。"},
+  {q:"エリクソンの青年期は第何段階？",c:["5","4","6","7"],a:0,e:"同一性 vs 役割拡散=第5段階。"},
+  {q:"友人関係を深めるスキルは？",c:["自己開示","命令","威嚇","沈黙"],a:0,e:"適切な自己開示で信頼が深まる。"},
+  {q:"延長された青年期の主因は？",c:["高等教育進学率上昇","出生率上昇","寿命短縮","農業人口増加"],a:0,e:"学歴社会化で自立が後ろ倒し。"},
+  {q:"ストレスコーピングの問題焦点型例は？",c:["課題分割と計画","愚痴り","趣味で気晴らし","寝て忘れる"],a:0,e:"問題そのものに働きかける。"},
+  {q:"アイデンティティ達成とは？",c:["危機経験後に確立","早期完了","無関心","拡散"],a:0,e:"identity achievement 状態。"},
+  {q:"モンスーン型風土の宗教傾向は？",c:["多神教的寛容","厳格一神教","無神論","合理主義"],a:0,e:"受容的で多神教的。"},
+  {q:"牧場型風土の価値観は？",c:["合理的自由","忍耐","闘争","宿命論"],a:0,e:"ギリシア=合理自由精神。"},
+  {q:"沙漠型風土の宗教観は？",c:["厳格な一神教","多神教","不可知論","汎神論"],a:0,e:"闘争的環境→厳格一神教。"},
+  {q:"『想像上の観衆』とは？",c:["常に他人が注目していると感じる","実際の観客","観衆がいない","配信視聴者"],a:0,e:"自意識過剰の一形態。"},
+  {q:"個人的神話とは？",c:["自分だけは特別と感じる","神話を学ぶ","古事記を読む","宗教儀式を行う"],a:0,e:"自己を無敵・特別と信じる傾向。"},
+  {q:"防衛機制『退行』の例は？",c:["幼児のように振る舞う","芸術に向ける","他者へ投影","理屈で正当化"],a:0,e:"過去の発達段階に戻る。"},
+  {q:"防衛機制『抑圧』とは？",c:["不安記憶を無意識に封じる","目標を転化","他者を真似る","怒りを別対象へ"],a:0,e:"意識に上がらないよう封じ込める。"},
+  {q:"青年期後半に増える社会的課題は？",c:["進路・職業選択","身長伸長","言語獲得","睡眠リズム"],a:0,e:"職業的自立が焦点。"},
+  {q:"スーパーのキャリア発達理論で青年期課題は？",c:["探索段階","定着段階","維持段階","撤退段階"],a:0,e:"自己理解と職業探索を行う段階。"},
+  {q:"ボランティアは何の機会？",c:["役割取得","役割剥奪","同化","逸脱"],a:0,e:"社会的役割経験の機会。"},
+  {q:"投票率向上の取り組みは？",c:["シチズンシップ教育","リメディアル教育","アクティブラーニング","スキャフォールディング"],a:0,e:"主権者教育とも呼ばれる。"}
+ ];
+    const P2 = [ {q:"古代ギリシャで神話的世界観を指す語は？",c:["ミュトス","ロゴス","ノモス","エートス"],a:0,e:"ミュトス＝神話、ロゴス＝理性。"},
+  {q:"タレスが万物の根源として挙げた元素は？",c:["火","水","空気","数"],a:1,e:"『万物のアルケーは水』とした。"},
+  {q:"ピタゴラスが万物のアルケーとしたものは？",c:["数","水","火","愛"],a:0,e:"数的調和で世界を説明。"},
+  {q:"『人間は万物の尺度』と説いたソフィストは？",c:["プロタゴラス","ゴルギアス","ソクラテス","タレス"],a:0,e:"相対主義を代表する命題。"},
+  {q:"ソクラテスが用いた真理探究法は？",c:["産婆術(問答法)","想起法","帰納法","演繹法"],a:0,e:"問答で真理を産み出す産婆術。"},
+  {q:"プラトンのイデア論を示す比喩は？",c:["洞窟の比喩","太陽の比喩","船旅の比喩","糸巻きの比喩"],a:0,e:"洞窟の影=現象界、外の太陽=イデア界。"},
+  {q:"プラトンの最高イデアは？",c:["善","美","勇気","正義"],a:0,e:"善のイデアが他を照らす。"},
+  {q:"アリストテレスの中庸に関し誤りは？",c:["怠惰=中庸","勇気=無謀と臆病の中間","寛大=浪費と吝嗇の中間","節制=快楽と禁欲の中間"],a:0,e:"怠惰は中庸ではない。"},
+  {q:"アリストテレスが人間を表す語は？",c:["社会的動物","理性的動物","観想的動物","遊戯的動物"],a:0,e:"ポリスで生きる社会的動物。"},
+  {q:"ベーコンの有名な言葉は？",c:["知は力なり","我思う故に我あり","存在が本質に先立つ","神は死んだ"],a:0,e:"Scientia potentia est。"},
+  {q:"ベーコンの市場イドラは何による偏見？",c:["言語のやり取り","感覚の限界","個人経験","誤学説"],a:0,e:"言語使用から生じる錯覚。"},
+  {q:"ベーコンの帰納法に不可欠なのは？",c:["実験と観察","演繹推理","瞑想","信仰"],a:0,e:"経験データ→一般法則。"},
+  {q:"デカルトが導いた確実な真理は？",c:["我思う故に我あり","知は力なり","無知の知","神は死んだ"],a:0,e:"Cogito ergo sum。"},
+  {q:"デカルトの心身観は？",c:["二元論","一元論","多元論","不可知論"],a:0,e:"精神と物体を明確に区別。"},
+  {q:"デカルトが発展させた数学分野は？",c:["解析幾何学","集合論","トポロジー","確率論"],a:0,e:"座標と代数の結合。"},
+  {q:"カント倫理学の中心命令は？",c:["定言命法","仮言命法","技術命法","戦術命法"],a:0,e:"無条件に従うべき道徳法則。"},
+  {q:"カント『人格』に当てはまらないのは？",c:["他人の手段として利用可","目的そのもの","自律的存在","道徳法則に従う"],a:0,e:"人格は決して手段として扱えない。"},
+  {q:"定言命法を一文で？",c:["行為の格率が普遍化可能なよう行為せよ","最大多数の最大幸福","感情に従え","自然に従え"],a:0,e:"普遍化可能性を基準。"},
+  {q:"ヘーゲルの止揚を表す語は？",c:["Aufhebung","Zeitgeist","Gestalt","Dasein"],a:0,e:"止揚(アウフヘーベン)。"},
+  {q:"ヘーゲルが自由実現共同体としたのは？",c:["国家","家族","市民社会","部族"],a:0,e:"国家=人倫の完成形態。"},
+  {q:"弁証法で歴史を動かす主体は？",c:["世界精神","自然本性","超人","リビドー"],a:0,e:"世界精神(絶対精神)。"},
+  {q:"サルトルの『______は本質に先立つ』",c:["実存","自由","責任","行為"],a:0,e:"実存が本質より先。"},
+  {q:"サルトルの社会参加語は？",c:["アンガージュマン","エポケー","アナムネーシス","レジリエンス"],a:0,e:"engagement=実践的関与。"},
+  {q:"サルトルが強調した自由の負担は？",c:["責任","幸福","救済","宿命"],a:0,e:"自由＝責任を負うこと。"},
+  {q:"ハーバーマスが批判した合理性は？",c:["目的合理性","コミュニケーション的合理性","価値合理性","情動合理性"],a:0,e:"目的合理性が生活世界を侵食。"},
+  {q:"ハーバーマスの民主モデルは？",c:["討議民主主義","寡頭制","全体主義","テクノクラシー"],a:0,e:"対話的合理性による合意形成。"},
+  {q:"妥当性要求に含まれないのは？",c:["暴力性","真実性","誠実性","理解可能性"],a:0,e:"暴力は対話に反する。"},
+  {q:"アーレントが失われたものは？",c:["公共空間","自由市場","権威","貨幣"],a:0,e:"言論と多様性の公共領域。"},
+  {q:"アーレント三活動に含まれないものは？",c:["観想(theoria)","行為(action)","仕事(work)","労働(labour)"],a:0,e:"観想は含まれない。"},
+  {q:"プロタゴラスの命題は？",c:["人間は万物の尺度","知は力なり","我思う故に我あり","神は死んだ"],a:0,e:"真理は人ごとに異なると主張。"},
+  {q:"ソクラテスは魂への______と呼んだ？",c:["配慮","欲望","離脱","服従"],a:0,e:"care of the soul。"},
+  {q:"プラトンの想起説で魂がいた世界は？",c:["イデア界","現象界","生成界"," 冥界"],a:0,e:"イデア界=真理の世界。"},
+  {q:"功績比例で配分する正義は？",c:["配分的正義","調整的正義","報復的正義","全体的正義"],a:0,e:"部分正義の一種。"},
+  {q:"『友愛があれば正義はいらない』語ったのは？",c:["アリストテレス","プラトン","カント","ヘーゲル"],a:0,e:"友愛は正義を超える徳。"},
+  {q:"明晰・判明の『判明』英語は？",c:["distinct","clear","obvious","certain"],a:0,e:"clear & distinct ideas。"},
+  {q:"4イドラにないのは？",c:["監獄イドラ","劇場イドラ","市場イドラ","洞窟イドラ"],a:0,e:"監獄イドラは造語。"},
+  {q:"懐疑で最初に疑われるのは？",c:["感覚","理性","演繹","言語"],a:0,e:"感覚は錯覚を起こすため。"},
+  {q:"自由意志は何の法則に従う？",c:["道徳法則","功利原理","重力法則","弁証法"],a:0,e:"定言命法に自律的に従う。"},
+  {q:"市民社会の特徴は？",c:["利己心と欲望","愛","宗教","自然本性"],a:0,e:"家族と国家の中間で欲望体系。"},
+  {q:"『投企』の英語は？",c:["project","escape","depend","delay"],a:0,e:"未来へ自己を投げかける。"},
+  {q:"損害均衡の正義は？",c:["調整的正義","配分的正義","功利正義","報復正義"],a:0,e:"損害を均衡させる正義。"},
+  {q:"生活世界を侵食しないものは？",c:["家族の会話","官僚制","市場経済","メディア"],a:0,e:"家族は生活世界そのもの。"},
+  {q:"アーレントの行為が生むのは？",c:["公共性","貨幣","権威","暴力"],a:0,e:"言論と行動による公共性。"},
+  {q:"経験論に対する立場は？",c:["合理論","功利論","観念論","存在論"],a:0,e:"理性と演繹を重視する合理論。"},
+  {q:"行為価値を置いたのは？",c:["動機","結果","快楽","権力"],a:0,e:"動機が道徳法則に沿うか。"},
+  {q:"多様性喪失が全体主義を生むとしたのは？",c:["アーレント","カント","ベーコン","ハイデガー"],a:0,e:"公共空間の崩壊を危惧。"},
+  {q:"討議民主に必須なのは？",c:["平等な発言機会","強制同調","権力制限","暴力"],a:0,e:"誰もが平等に討議参加。"},
+  {q:"テオーリアはどんな生？",c:["観想的生活","労働生活","快楽生活","政治生活"],a:0,e:"真理を観照する生活。"},
+  {q:"アカデメイアはどこ？",c:["アテナイ郊外","リュケイオン","ストア","ペリパトス"],a:0,e:"アテナイ郊外の学園。"},
+  {q:"自然観の特徴は？",c:["機械論的","目的論的","有機的","神秘的"],a:0,e:"自然を機械のように説明。"},
+  {q:"善意志の基準は？",c:["動機","効用","快楽","権力"],a:0,e:"動機が道徳法則に沿うか。"},
+  {q:"歴史を動かすのは？",c:["矛盾の止揚","偶然","啓示","本能"],a:0,e:"弁証法的止揚。"},
+  {q:"公共性が最高なのは？",c:["行為","仕事","労働","観想"],a:0,e:"言論・行動が現れる行為。"},
+  {q:"討議民主が目指す社会は？",c:["討議民主社会","権威主義社会","寡頭制社会","神権政治"],a:0,e:"理性的対話で合意形成。"},
+  {q:"自由の刑の意味は？",c:["自由ゆえに責任を負う","刑務所にいる","神の罰","宿命"],a:0,e:"自由から逃れられず責任を負う運命。"},
+  {q:"公共空間を回復するには？",c:["言葉と行動への参加","貨幣配分","暴力","隠遁"],a:0,e:"対話と行動で公共性を支える。"}
+ ];
+    const allQuestions = [...P1, ...P2];
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+    let currentQuiz=[], idx=0, score=0;
+    const bar=document.getElementById("bar"), cnt=document.getElementById("counter"),
+          card=document.getElementById("card"), qtxt=document.getElementById("qtxt"),
+          choices=document.getElementById("choices"), expl=document.getElementById("expl"),
+          next=document.getElementById("next"), result=document.getElementById("result"),
+          postQuiz=document.getElementById("postQuiz"),
+          reviewBtn=document.getElementById("reviewBtn"),
+          newBtn=document.getElementById("newBtn");
+    function initQuiz(isReview){
+      if(!isReview) currentQuiz = shuffle([...allQuestions]).slice(0,10);
+      idx=0; score=0;
+      result.style.display=postQuiz.style.display="none";
+      card.style.display="block";
+      updateProgress(); render();
+    }
+    function updateProgress(){
+      cnt.textContent = `問 ${idx+1} / ${currentQuiz.length}`;
+      bar.style.width = `${(idx/currentQuiz.length)*100}%`;
+    }
+    function render(){
+      const {q,c} = currentQuiz[idx];
+      qtxt.textContent = q;
+      choices.innerHTML = "";
+      c.forEach((t,i)=>{
+        const btn=document.createElement("button");
+        btn.textContent = t;
+        btn.onclick = ()=>judge(i);
+        choices.appendChild(btn);
+      });
+      expl.style.display = next.style.display = "none";
+      updateProgress();
+    }
+    function judge(sel){
+      const {a,e} = currentQuiz[idx];
+      Array.from(choices.children).forEach((b,i)=>{
+        b.disabled = true;
+        if(i===a){
+          b.classList.add("correct");
+          const icon=document.createElement("span");
+          icon.textContent="✓"; icon.className="feedback-icon"; b.appendChild(icon);
+        } else if(i===sel){
+          b.classList.add("incorrect");
+          const icon=document.createElement("span");
+          icon.textContent="✕"; icon.className="feedback-icon"; b.appendChild(icon);
+        }
+      });
+      if(sel===a) score++;
+      expl.textContent = `解説：${e}`;
+      expl.style.display = next.style.display = "block";
+    }
+    next.onclick = ()=>{
+      idx+1<currentQuiz.length ? (idx++, render()) : finish();
+    };
+    function finish(){
+      card.style.display="none";
+      bar.style.width="100%";
+      cnt.textContent="完了";
+      result.innerHTML = `<h2>得点：${score} / ${currentQuiz.length}</h2>`;
+      result.style.display = postQuiz.style.display = "block";
+    }
+    reviewBtn.onclick = ()=>initQuiz(true);
+    newBtn.onclick    = ()=>initQuiz(false);
+    window.addEventListener("DOMContentLoaded", ()=>initQuiz(false));
+  </script>
+</body>
+</html>
